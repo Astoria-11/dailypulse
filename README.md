@@ -8,7 +8,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/77AutumN/DailyPulse?style=social)](https://github.com/77AutumN/DailyPulse)
+[![Stars](https://img.shields.io/github/stars/Routhleck/dailypulse?style=social)](https://github.com/Routhleck/dailypulse)
 
 </div>
 
@@ -46,8 +46,8 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/77AutumN/DailyPulse.git
-cd DailyPulse
+git clone https://github.com/Routhleck/dailypulse.git
+cd dailypulse
 ```
 
 ### 2. 安装依赖
@@ -94,6 +94,8 @@ export HTTPS_PROXY=http://127.0.0.1:7890
 | `LLM_API_KEY` | 英文条目中文翻译 | 可选，不填则展示英文原文 |
 | `LLM_BASE_URL` | LLM 接口地址，支持任意 OpenAI-compatible 提供商 | 可选，默认 Gemini |
 | `LLM_MODEL` | 使用的模型名称 | 可选，默认 `gemini-2.5-flash-lite` |
+| `LLM_TRANSLATE` | 是否开启中文翻译，`true` / `false` | 可选，默认 `false`（展示英文原文） |
+| `LLM_TRANSLATE_MODEL` | 翻译专用轻量模型，建议用便宜的 lite 模型 | 可选，不填则使用 `LLM_MODEL` |
 
 支持的提供商示例：
 
@@ -159,6 +161,8 @@ DailyPulse/
 **Variables（非敏感，可选）：**
 - `LLM_BASE_URL` — 自定义 LLM 接口地址
 - `LLM_MODEL` — 自定义模型名称
+- `LLM_TRANSLATE` — 是否开启翻译（`true` / `false`）
+- `LLM_TRANSLATE_MODEL` — 翻译专用轻量模型
 
 `GITHUB_TOKEN` 由 Actions 自动提供，无需手动配置。
 
@@ -166,14 +170,12 @@ DailyPulse/
 
 ---
 
-## 📄 License
-
-MIT — 随便用，改了也不用告诉我。
-
 ---
 
 <div align="center">
 
 **如果觉得有用，给个 ⭐ 就是最大的支持。**
+
+灵感来源于 [77AutumN/Intel_Briefing](https://github.com/77AutumN/Intel_Briefing)
 
 </div>
