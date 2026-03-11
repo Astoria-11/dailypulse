@@ -1,0 +1,120 @@
+name: DailyPulse Report
+
+on:
+  schedule:
+    - cron: '51 23 * * *'  # UTC 23:51 = 北京 07:51（避开整点高峰）
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout engine
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate Morning Report
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+        run: python run_mission.py
+
+      - name: Deliver report to PWA
+        env:
+          PWA_DEPLOY_TOKEN: ${{ secrets.PWA_DEPLOY_TOKEN }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          REPORT="reports/daily_briefings/Morning_Report_${DATE}.md"
+
+          if [ ! -f "$REPORT" ]; then
+            echo "❌ Report not found: $REPORT"
+            ls -la reports/daily_briefings/ 2>/dev/null || echo "Directory does not exist"
+            exit 1
+          fi
+
+          echo "📄 Report found: $(wc -c < "$REPORT") bytes"
+
+          git clone https://x-access-token:${PWA_DEPLOY_TOKEN}@github.com/77AutumN/intel-briefing-pwa.git /tmp/pwa
+          cp "$REPORT" /tmp/pwa/data/daily_briefings/
+
+          cd /tmp/pwa
+          git config user.name "Intel Bot"
+          git config user.email "bot@7brief.com"
+          git add data/daily_briefings/
+          git diff --cached --stat
+
+          if git diff --cached --quiet; then
+            echo "✅ No changes to commit"
+          else
+            git commit -m "data: add daily report ${DATE}"
+            git push
+            echo "✅ Report delivered to intel-briefing-pwa"
+          fi
+
+      - name: Publish to GitHub Pages
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+
+          python - <<'EOF'
+import markdown, datetime
+date = datetime.date.today().strftime("%Y-%m-%d")
+with open(f"reports/daily_briefings/Morning_Report_{date}.md", encoding="utf-8") as f:
+    content = f.read()
+html_body = markdown.markdown(content, extensions=["tables", "fenced_code"])
+page = f"""<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>国际时事日报 {date}</title>
+<style>
+  body {{ max-width: 860px; margin: 40px auto; padding: 0 20px;
+         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         line-height: 1.7; color: #222; }}
+  h1 {{ border-bottom: 2px solid #333; padding-bottom: 8px; }}
+  h2 {{ margin-top: 2em; color: #1a1a2e; }}
+  h3 {{ color: #333; }}
+  a {{ color: #0066cc; }}
+  blockquote {{ border-left: 3px solid #ccc; margin: 0; padding-left: 1em; color: #555; }}
+  hr {{ border: none; border-top: 1px solid #eee; margin: 2em 0; }}
+</style>
+</head>
+<body>
+{html_body}
+</body>
+</html>"""
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(page)
+print("index.html generated")
+EOF
+
+          git config user.name "Intel Bot"
+          git config user.email "bot@intel-briefing.com"
+
+          git fetch origin gh-pages 2>/dev/null || true
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+
+          cp index.html /tmp/index.html
+          git rm -rf . --quiet 2>/dev/null || true
+          cp /tmp/index.html index.html
+
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "pages: update daily report ${DATE}"
+            git push origin gh-pages
+          fi
+          git checkout main
