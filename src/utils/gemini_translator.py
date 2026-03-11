@@ -13,9 +13,9 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 try:
-    from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
+    from config import LLM_API_KEY, LLM_BASE_URL, LLM_TRANSLATE, LLM_TRANSLATE_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
 except ImportError:
-    from src.config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
+    from src.config import LLM_API_KEY, LLM_BASE_URL, LLM_TRANSLATE, LLM_TRANSLATE_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
 
 # Backwards-compat: keep GEMINI_API_KEY alias for any external callers
 GEMINI_API_KEY = LLM_API_KEY
@@ -26,10 +26,10 @@ def _chat(prompt: str, max_tokens: int = 1024) -> str:
     if not LLM_API_KEY:
         return ""
 
-    url = f"{LLM_BASE_URL.rstrip('/')}/chat/completions"
+    url = f"{LLM_BASE_URL.rstrip('/')}/v1/chat/completions"
     headers = {"Authorization": f"Bearer {LLM_API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": LLM_MODEL,
+        "model": LLM_TRANSLATE_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
         "max_tokens": max_tokens,
@@ -55,8 +55,7 @@ def _chat(prompt: str, max_tokens: int = 1024) -> str:
 
 
 def translate_to_chinese(text: str, max_chars: int = 100) -> str:
-    if not LLM_API_KEY:
-        logger.warning("LLM_API_KEY 未配置，跳过翻译")
+    if not LLM_TRANSLATE or not LLM_API_KEY:
         return text[:max_chars] + "..." if len(text) > max_chars else text
 
     if not text or len(text) < 10:

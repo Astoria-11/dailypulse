@@ -36,6 +36,12 @@ LLM_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash-lite")
 
+# --- Translation Config ---
+# LLM_TRANSLATE: set to "true" to enable translation, default off
+LLM_TRANSLATE = os.getenv("LLM_TRANSLATE", "false").lower() == "true"
+# LLM_TRANSLATE_MODEL: separate lite model for translation (falls back to LLM_MODEL)
+LLM_TRANSLATE_MODEL = os.getenv("LLM_TRANSLATE_MODEL") or LLM_MODEL
+
 # Backwards-compat alias
 GEMINI_API_KEY = LLM_API_KEY
 
