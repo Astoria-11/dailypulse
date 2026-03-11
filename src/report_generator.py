@@ -11,7 +11,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 try:
-    from utils.gemini_translator import translate_to_chinese
+    from utils.gemini_translator import translate_to_chinese, summarize_section
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
@@ -20,6 +20,8 @@ if not GEMINI_AVAILABLE:
     logger.info("Gemini translator not available, using original text.")
     def translate_to_chinese(text, max_chars=100):
         return text[:max_chars] + "..." if len(text) > max_chars else text
+    def summarize_section(titles_and_summaries, section_name):
+        return ""
 
 
 def _translate_all(items_by_section: dict) -> dict:
@@ -30,7 +32,7 @@ def _translate_all(items_by_section: dict) -> dict:
             if item.get("lang") == "zh" or not GEMINI_AVAILABLE:
                 continue
             tasks[(section, i, "title")]   = (item.get("title", ""),   100)
-            tasks[(section, i, "summary")] = (item.get("summary", ""), 300)
+            tasks[(section, i, "summary")] = (item.get("summary", ""), 500)
 
     if not tasks:
         return {}
@@ -53,11 +55,52 @@ def _translate_all(items_by_section: dict) -> dict:
     return results
 
 
-def _render_section(items, limit, translations, section_key):
+_SECTION_NAMES = {
+    "politics": "国际政治与外交", "economics": "经济与金融",
+    "military": "军事与安全", "society": "社会与人文",
+    "asia": "亚洲焦点", "analysis": "深度分析",
+}
+
+
+def _summarize_sections(section_meta: list) -> dict:
+    """并行生成各板块总结，返回 {section_key: summary_str}"""
+    def _build_input(items):
+        texts = []
+        for item in items:
+            title = item.get("title", "")
+            summary = item.get("summary", "")
+            texts.append(f"{title}. {summary[:100]}" if summary else title)
+        return texts
+
+    results = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {
+            executor.submit(
+                summarize_section,
+                _build_input(items),
+                _SECTION_NAMES.get(key, key)
+            ): key
+            for key, items, _ in section_meta
+            if items
+        }
+        for future in concurrent.futures.as_completed(futures):
+            key = futures[future]
+            try:
+                results[key] = future.result()
+            except Exception as e:
+                logger.warning(f"Section summary failed for {key}: {e}")
+    return results
+
+
+def _render_section(items, limit, translations, section_key, section_summary=""):
     lines = []
     if not items:
         lines.append("*暂无数据*\n")
         return lines
+
+    if section_summary:
+        lines.append(f"> 📊 **板块速览：** {section_summary}")
+        lines.append("")
 
     for i, item in enumerate(items[:limit], 1):
         title = item.get("title", "Untitled")
@@ -82,7 +125,7 @@ def _render_section(items, limit, translations, section_key):
             meta += f" | 📅 {pub_date}"
         lines.append(meta)
         if display_summary:
-            lines.append(f"> {display_summary[:200]}")
+            lines.append(f"> {display_summary}")
         lines.append("")
 
     return lines
@@ -108,6 +151,11 @@ def generate_report(intel: dict, date_str: str) -> str:
     # 并行翻译
     translations = _translate_all(items_by_section)
 
+    # 并行生成板块总结
+    section_summaries = _summarize_sections(
+        [(key, items_by_section[key], limit) for key, _, limit in sections]
+    )
+
     lines = [
         "# 🌍 国际时事日报 (World Affairs Daily Briefing)",
         f"**日期:** {date_str}",
@@ -121,7 +169,7 @@ def generate_report(intel: dict, date_str: str) -> str:
     for key, heading, limit in sections:
         lines.append(f"## {heading}")
         lines.append("")
-        lines.extend(_render_section(items_by_section[key], limit, translations, key))
+        lines.extend(_render_section(items_by_section[key], limit, translations, key, section_summaries.get(key, "")))
 
     lines.append("---")
     lines.append("*报告由 DailyPulse 自动生成*")

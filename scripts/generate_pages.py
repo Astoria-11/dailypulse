@@ -350,6 +350,21 @@ page = f"""<!DOCTYPE html>
   .share-btn:hover {{ background: var(--bg-body); color: var(--accent); }}
   .share-btn.copied {{ color: #16a34a; }}
 
+  /* --- Section Summary Card --- */
+  .section-summary {{
+    background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    color: var(--text-summary);
+    line-height: 1.7;
+  }}
+  @media (prefers-color-scheme: dark) {{
+    .section-summary {{ background: #1e293b; }}
+  }}
+
   footer {{
     text-align: center;
     font-size: 0.8rem;
@@ -539,10 +554,12 @@ page = f"""<!DOCTYPE html>
   nodes.forEach(node => {{
     if (node.nodeType !== 1) return;
     if (node.tagName === 'H2') {{
-      currentSection = {{ title: node.innerHTML, articles: [] }};
+      currentSection = {{ title: node.innerHTML, summary: null, articles: [] }};
       sections.push(currentSection);
     }} else if (node.tagName === 'H3' && currentSection) {{
       currentSection.articles.push({{ title: node, elements: [] }});
+    }} else if (currentSection && currentSection.articles.length === 0) {{
+      if (node.tagName === 'BLOCKQUOTE') currentSection.summary = node;
     }} else if (currentSection && currentSection.articles.length > 0) {{
       currentSection.articles[currentSection.articles.length - 1].elements.push(node);
     }}
@@ -558,6 +575,13 @@ page = f"""<!DOCTYPE html>
     headerEl.className = 'section-header';
     headerEl.innerHTML = `<h2>${{sec.title}}</h2>`;
     sectionEl.appendChild(headerEl);
+
+    if (sec.summary) {{
+      const summaryEl = document.createElement('div');
+      summaryEl.className = 'section-summary';
+      summaryEl.innerHTML = sec.summary.innerHTML;
+      sectionEl.appendChild(summaryEl);
+    }}
 
     sec.articles.forEach(art => {{
       const card = document.createElement('div');

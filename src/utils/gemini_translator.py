@@ -13,15 +13,15 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 try:
-    from config import LLM_API_KEY, LLM_BASE_URL, LLM_TRANSLATE, LLM_TRANSLATE_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
+    from config import LLM_API_KEY, LLM_BASE_URL, LLM_TRANSLATE, LLM_TRANSLATE_MODEL, LLM_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
 except ImportError:
-    from src.config import LLM_API_KEY, LLM_BASE_URL, LLM_TRANSLATE, LLM_TRANSLATE_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
+    from src.config import LLM_API_KEY, LLM_BASE_URL, LLM_TRANSLATE, LLM_TRANSLATE_MODEL, LLM_MODEL, GEMINI_TIMEOUT, GEMINI_MAX_RETRIES
 
 # Backwards-compat: keep GEMINI_API_KEY alias for any external callers
 GEMINI_API_KEY = LLM_API_KEY
 
 
-def _chat(prompt: str, max_tokens: int = 1024) -> str:
+def _chat(prompt: str, max_tokens: int = 1024, model: str = None) -> str:
     """Call OpenAI-compatible /v1/chat/completions endpoint."""
     if not LLM_API_KEY:
         return ""
@@ -29,7 +29,7 @@ def _chat(prompt: str, max_tokens: int = 1024) -> str:
     url = f"{LLM_BASE_URL.rstrip('/')}/v1/chat/completions"
     headers = {"Authorization": f"Bearer {LLM_API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": LLM_TRANSLATE_MODEL,
+        "model": model or LLM_TRANSLATE_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
         "max_tokens": max_tokens,
@@ -68,7 +68,7 @@ def translate_to_chinese(text: str, max_chars: int = 100) -> str:
 原文：
 {text}"""
 
-    result = _chat(prompt, max_tokens=512)
+    result = _chat(prompt, max_tokens=1024)
     if result:
         return result
     return text[:max_chars] + "..." if len(text) > max_chars else text
@@ -106,3 +106,16 @@ def summarize_blog_article(content: str, mode: str = "brief") -> str:
         max_tokens = 1024
 
     return _chat(prompt, max_tokens=max_tokens)
+
+
+def summarize_section(titles_and_summaries: list[str], section_name: str) -> str:
+    """用主模型生成板块总结，输入为该板块所有文章的标题+摘要列表。"""
+    if not LLM_API_KEY or not titles_and_summaries:
+        return ""
+    content = "\n".join(f"- {t}" for t in titles_and_summaries)
+    prompt = f"""以下是今日{section_name}板块的新闻条目：
+
+{content}
+
+请用2-3句话总结今日该板块的整体动态和核心趋势，语言简洁，直接输出总结，不要加标题或前缀。"""
+    return _chat(prompt, max_tokens=256, model=LLM_MODEL)
