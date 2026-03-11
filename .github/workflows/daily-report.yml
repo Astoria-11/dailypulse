@@ -37,39 +37,7 @@ jobs:
       - name: Publish to GitHub Pages
         run: |
           DATE=$(date -u +%Y-%m-%d)
-
-          python - <<'EOF'
-import markdown, datetime
-date = datetime.date.today().strftime("%Y-%m-%d")
-with open(f"reports/daily_briefings/Morning_Report_{date}.md", encoding="utf-8") as f:
-    content = f.read()
-html_body = markdown.markdown(content, extensions=["tables", "fenced_code"])
-page = f"""<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>国际时事日报 {date}</title>
-<style>
-  body {{ max-width: 860px; margin: 40px auto; padding: 0 20px;
-         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-         line-height: 1.7; color: #222; }}
-  h1 {{ border-bottom: 2px solid #333; padding-bottom: 8px; }}
-  h2 {{ margin-top: 2em; color: #1a1a2e; }}
-  h3 {{ color: #333; }}
-  a {{ color: #0066cc; }}
-  blockquote {{ border-left: 3px solid #ccc; margin: 0; padding-left: 1em; color: #555; }}
-  hr {{ border: none; border-top: 1px solid #eee; margin: 2em 0; }}
-</style>
-</head>
-<body>
-{html_body}
-</body>
-</html>"""
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(page)
-print("index.html generated")
-EOF
+          python scripts/generate_pages.py
 
           git config user.name "Intel Bot"
           git config user.email "bot@intel-briefing.com"
