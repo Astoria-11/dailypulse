@@ -101,6 +101,8 @@ page = f"""<!DOCTYPE html>
     text-align: center;
     clip-path: ellipse(120% 100% at 50% 0%);
     margin-bottom: 0;
+    position: relative;
+    z-index: 20;
   }}
   .site-header .brand {{
     font-size: 0.75rem;
