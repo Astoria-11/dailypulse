@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Convert daily report Markdown to a fancy HTML page with Tab-based mobile UX."""
-import sys
-import os
+"""Render daily report Markdown to a modern responsive HTML page."""
+
 import datetime
+import os
+import sys
+
 import markdown
 
 # --- 1. Setup ---
@@ -27,719 +29,523 @@ html_body = markdown.markdown(content, extensions=["tables", "fenced_code"])
 
 # Determine if this is an archive page (not today)
 today = datetime.date.today().strftime("%Y-%m-%d")
-is_archive = (date != today)
-
-# Back-to-today link for archive pages
-back_link_html = ''
-if is_archive:
-    back_link_html = '<a href="../index.html" class="back-link">← 返回今日</a>'
-
-# archive_base: relative path prefix for archive links
+is_archive = date != today
 archive_base = "archive" if not is_archive else ".."
+back_link_html = ""
+if is_archive:
+    back_link_html = '<a class="btn btn-outline-light btn-sm" href="../index.html">返回今日</a>'
 
-# --- 2. Enhanced HTML Template ---
+# --- 2. HTML Template ---
 page = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>DailyPulse \xb7 {date_display}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DailyPulse · {date_display}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <script>const ARCHIVE_BASE = "{archive_base}";</script>
-
 <style>
   :root {{
-    --bg-body: #F3F4F6;
-    --bg-card: #FFFFFF;
-    --text-primary: #1F2937;
-    --text-summary: #4B5563;
-    --text-meta: #6B7280;
-    --accent: #2563EB;
-    --border-color: #E5E7EB;
-    --header-bg: #1e1b4b;
-    --header-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --font-serif: "Noto Serif SC", serif;
-    --font-sans: "Inter", -apple-system, sans-serif;
+    --dp-bg: #eef2f7;
+    --dp-card: #ffffff;
+    --dp-text: #1f2937;
+    --dp-muted: #6b7280;
+    --dp-accent: #2563eb;
+    --dp-border: #e5e7eb;
+    --dp-hero: linear-gradient(135deg, #111827 0%, #1f3b8a 52%, #2563eb 100%);
+    --dp-serif: "Noto Serif SC", serif;
+    --dp-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }}
 
   @media (prefers-color-scheme: dark) {{
     :root {{
-      --bg-body: #111827;
-      --bg-card: #1F2937;
-      --text-primary: #F9FAFB;
-      --text-summary: #9CA3AF;
-      --text-meta: #9CA3AF;
-      --accent: #60A5FA;
-      --border-color: #374151;
-      --header-bg: #0f172a;
-      --header-gradient: linear-gradient(to right, #0f172a, #1e293b);
-      --shadow-card: none;
-      --shadow-hover: 0 0 0 1px var(--accent);
+      --dp-bg: #0f172a;
+      --dp-card: #111827;
+      --dp-text: #f3f4f6;
+      --dp-muted: #94a3b8;
+      --dp-accent: #60a5fa;
+      --dp-border: #334155;
+      --dp-hero: linear-gradient(135deg, #020617 0%, #0f172a 48%, #1d4ed8 100%);
     }}
   }}
-
-  * {{ box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }}
 
   body {{
-    background: var(--bg-body);
-    color: var(--text-primary);
-    font-family: var(--font-sans);
-    line-height: 1.6;
-    font-size: 15px;
-    padding-bottom: 40px;
+    font-family: var(--dp-sans);
+    background: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%), var(--dp-bg);
+    color: var(--dp-text);
+    min-height: 100vh;
   }}
 
-  /* --- Header --- */
-  .site-header {{
-    background: var(--header-gradient);
+  .hero {{
+    background: var(--dp-hero);
     color: #fff;
-    padding: 2.5rem 1rem 3.25rem;
-    text-align: center;
-    clip-path: ellipse(120% 100% at 50% 0%);
-    margin-bottom: 8px;
-    position: relative;
-    z-index: 20;
+    padding: 2.25rem 0 1.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
   }}
-  .site-header .brand {{
-    font-size: 0.75rem;
-    letter-spacing: 0.15em;
+
+  .hero-brand {{
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    opacity: 0.7;
-    margin-bottom: 0.5rem;
-  }}
-  .site-header h1 {{
-    font-family: var(--font-serif);
-    font-size: 2.2rem;
-    margin-bottom: 0.8rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  }}
-  .header-meta {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }}
-  .date-badge {{
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(4px);
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    display: inline-block;
-  }}
-  .back-link {{
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(4px);
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    color: #fff;
-    text-decoration: none;
-    display: inline-block;
-    transition: background 0.2s;
-  }}
-  .back-link:hover {{ background: rgba(255,255,255,0.25); }}
-
-  /* --- History Dropdown --- */
-  .history-dropdown {{
-    position: relative;
-    display: inline-block;
-  }}
-  .history-btn {{
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(4px);
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: background 0.2s;
-  }}
-  .history-btn:hover {{ background: rgba(255,255,255,0.25); }}
-  .history-menu {{
-    display: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    min-width: 160px;
-    z-index: 200;
-    overflow: hidden;
-  }}
-  .history-menu.open {{ display: block; }}
-  .history-menu a {{
-    display: block;
-    padding: 10px 16px;
-    color: #1F2937;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: background 0.15s;
-  }}
-  .history-menu a:hover {{ background: #F3F4F6; }}
-  .history-menu .loading {{
-    padding: 10px 16px;
-    color: #6B7280;
-    font-size: 0.85rem;
-  }}
-  @media (prefers-color-scheme: dark) {{
-    .history-menu {{ background: #1F2937; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }}
-    .history-menu a {{ color: #F9FAFB; }}
-    .history-menu a:hover {{ background: #374151; }}
-  }}
-
-  /* --- Layout Wrapper --- */
-  .layout-container {{
-    max-width: 1000px;
-    margin: 16px auto 0;
-    padding: 0 20px;
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 30px;
-    position: relative;
-    z-index: 30;
-  }}
-
-  /* --- Sidebar (Desktop) --- */
-  .sidebar {{
-    position: sticky;
-    top: 20px;
-    align-self: start;
-    background: var(--bg-card);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
-  }}
-  .sidebar-title {{
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--text-meta);
-    margin-bottom: 12px;
-    padding-left: 8px;
-    text-transform: uppercase;
-  }}
-  .nav-link {{
-    display: flex;
-    align-items: center;
-    padding: 10px 12px;
-    color: var(--text-summary);
-    text-decoration: none;
-    font-size: 0.95rem;
-    border-radius: 8px;
-    margin-bottom: 4px;
-    transition: background 0.2s, color 0.2s;
-    cursor: pointer;
-  }}
-  .nav-link:hover {{ background: var(--bg-body); color: var(--text-primary); }}
-  .layout-container:not(.mobile-mode) .nav-link.active {{
-    background: #eff6ff;
-    color: var(--accent);
+    opacity: 0.8;
+    font-size: 0.72rem;
     font-weight: 600;
   }}
-  @media (prefers-color-scheme: dark) {{
-    .layout-container:not(.mobile-mode) .nav-link.active {{ background: #1e293b; }}
+
+  .hero-title {{
+    margin-top: 0.5rem;
+    font-family: var(--dp-serif);
+    font-size: clamp(1.75rem, 3.8vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.25;
   }}
 
-  /* --- Main Content Area --- */
-  #main-content {{
-    min-width: 0;
-    padding-top: 0;
+  .hero-meta {{
+    margin-top: 0.95rem;
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    align-items: center;
   }}
+
+  .hero-chip {{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.34rem 0.8rem;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.22);
+    font-size: 0.84rem;
+  }}
+
+  .app-wrap {{
+    margin-top: 1.1rem;
+    margin-bottom: 2.2rem;
+  }}
+
+  .panel {{
+    background: var(--dp-card);
+    border: 1px solid var(--dp-border);
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.04);
+  }}
+
+  .sidebar-panel {{
+    position: sticky;
+    top: 1rem;
+  }}
+
+  .sidebar-title {{
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dp-muted);
+    font-weight: 700;
+  }}
+
+  .nav-item-link {{
+    border: 0;
+    border-left: 3px solid transparent;
+    border-radius: 0.5rem;
+    color: var(--dp-muted);
+    transition: all .15s ease;
+    font-size: 0.93rem;
+  }}
+
+  .nav-item-link:hover {{
+    background: color-mix(in srgb, var(--dp-accent) 8%, transparent);
+    color: var(--dp-text);
+  }}
+
+  .nav-item-link.active {{
+    border-left-color: var(--dp-accent);
+    color: var(--dp-text);
+    background: color-mix(in srgb, var(--dp-accent) 12%, transparent);
+    font-weight: 600;
+  }}
+
   .section {{
-    background: transparent;
-    margin-bottom: 50px;
-    scroll-margin-top: 20px;
-  }}
-  .section-header h2 {{
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    color: var(--text-primary);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--border-color);
-    line-height: 1.3;
+    margin-bottom: 2rem;
+    scroll-margin-top: 1rem;
   }}
 
-  /* --- Article Cards --- */
-  .article-card {{
-    background: var(--bg-card);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow-card);
-    border: 1px solid var(--border-color);
-    transition: transform 0.2s;
+  .section-head {{
+    font-family: var(--dp-serif);
+    font-size: clamp(1.18rem, 2.2vw, 1.58rem);
+    margin-bottom: 1rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 2px solid var(--dp-border);
   }}
+
+  .summary-card {{
+    border-radius: 12px;
+    border-left: 4px solid var(--dp-accent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--dp-accent) 10%, transparent), color-mix(in srgb, #22c55e 10%, transparent));
+    color: var(--dp-text);
+  }}
+
+  .article-card {{
+    border-radius: 12px;
+    border: 1px solid var(--dp-border);
+    background: var(--dp-card);
+    margin-bottom: 1rem;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }}
+
   .article-card:hover {{
     transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
-    border-color: var(--accent);
+    box-shadow: 0 12px 24px rgba(2, 6, 23, 0.08);
   }}
-  .article-title {{
-    font-family: var(--font-serif);
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    line-height: 1.4;
-    color: var(--text-primary);
+
+  .article-title a {{
+    color: inherit;
+    text-decoration: none;
   }}
-  .article-title a {{ text-decoration: none; color: inherit; }}
-  .article-summary {{
-    font-size: 0.95rem;
-    color: var(--text-summary);
-    margin-bottom: 12px;
-    line-height: 1.5;
+
+  .article-title a:hover {{
+    color: var(--dp-accent);
   }}
-  .article-meta {{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-    font-size: 0.75rem;
-  }}
+
   .meta-pill {{
-    background: var(--bg-body);
-    color: var(--text-meta);
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--border-color);
-  }}
-  .article-content {{
-    border-left: 3px solid var(--accent);
-    padding-left: 14px;
-    margin-top: 12px;
-    font-size: 1rem;
-    color: var(--text-primary);
-    line-height: 1.7;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--dp-border);
+    border-radius: 999px;
+    padding: 0.15rem 0.56rem;
+    font-size: 0.76rem;
+    color: var(--dp-muted);
+    background: color-mix(in srgb, var(--dp-card) 70%, transparent);
   }}
 
-  .article-title-row {{
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 10px;
-  }}
-  .article-title-row .article-title {{
-    margin-bottom: 0;
-    flex: 1;
-  }}
-  .share-btn {{
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-meta);
-    font-size: 0.85rem;
-    padding: 2px 6px;
-    border-radius: 6px;
-    transition: background 0.15s, color 0.15s;
-    line-height: 1.4;
-    margin-top: 2px;
-  }}
-  .share-btn:hover {{ background: var(--bg-body); color: var(--accent); }}
-  .share-btn.copied {{ color: #16a34a; }}
-
-  /* --- Section Summary Card --- */
-  .section-summary {{
-    background: linear-gradient(135deg, #eff6ff, #f0fdf4);
-    border-left: 4px solid var(--accent);
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin-bottom: 20px;
-    font-size: 0.95rem;
-    color: var(--text-summary);
-    line-height: 1.7;
-  }}
-  @media (prefers-color-scheme: dark) {{
-    .section-summary {{ background: #1e293b; }}
+  .article-quote {{
+    border-left: 3px solid var(--dp-accent);
+    padding-left: 0.8rem;
+    color: var(--dp-text);
+    margin-top: 0.5rem;
   }}
 
-  footer {{
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-meta);
-    margin-top: 40px;
+  .article-summary {{
+    color: var(--dp-muted);
   }}
 
-  /* --- MOBILE OPTIMIZATION --- */
-  @media (max-width: 768px) {{
-    .layout-container {{
-      display: block;
-      margin-top: 0;
-      padding: 0;
-    }}
-    .site-header {{
-        padding: 2rem 1rem 2.25rem;
-        clip-path: none;
-    }}
-    .sidebar {{
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        border-radius: 0;
-        border: none;
-        border-bottom: 1px solid var(--border-color);
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(10px);
-        margin: 0;
-        padding: 0;
-        overflow-x: auto;
-        white-space: nowrap;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }}
-    @media (prefers-color-scheme: dark) {{
-        .sidebar {{ background: rgba(31, 41, 55, 0.98); }}
-    }}
-    .sidebar::-webkit-scrollbar {{ display: none; }}
-    .sidebar-title {{ display: none; }}
-    .sidebar nav {{
-        display: flex;
-        padding: 0 16px;
-    }}
-    .nav-link {{
-        display: inline-block;
-        padding: 14px 16px;
-        margin: 0;
-        font-size: 0.9rem;
-        background: transparent !important;
-        border-radius: 0;
-        color: var(--text-summary);
-        border-bottom: 2px solid transparent;
-        flex-shrink: 0;
-    }}
-    .nav-link.active {{
-        color: var(--accent) !important;
-        border-bottom-color: var(--accent);
-        font-weight: 600;
-        background: transparent !important;
-    }}
-    #main-content {{
-        padding: 20px 16px;
-        background: var(--bg-body);
-        min-height: 60vh;
-    }}
-    .section {{
-        display: none;
-        animation: fadeIn 0.3s ease;
-    }}
-    .section.active-tab {{
-        display: block;
-    }}
-    .section-header h2 {{
-        font-size: 1.3rem;
-        margin-top: 0;
-        padding-top: 0;
-    }}
-    .article-card {{
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }}
-    .section-summary {{
-        padding: 12px 14px;
-        margin-bottom: 16px;
-    }}
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(5px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
+  .mobile-nav-btn {{
+    border-color: rgba(255,255,255,0.28);
+    color: #fff;
+  }}
+
+  .mobile-nav-btn:hover {{
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }}
+
+  .history-menu-scroll {{
+    max-height: 300px;
+    overflow-y: auto;
+  }}
+
+  @media (max-width: 991.98px) {{
+    .app-wrap {{ margin-top: 0.85rem; }}
+    .hero {{ padding: 1.5rem 0 1.1rem; }}
   }}
 </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="brand">DailyPulse</div>
-  <h1>\U0001f30d 国际时事日报</h1>
-  <div class="header-meta">
-    <div class="date-badge">\U0001f4c5 {date_display}</div>
-    {back_link_html}
-    <div class="history-dropdown">
-      <button class="history-btn" id="history-btn">\U0001f4c2 历史 \u25be</button>
-      <div class="history-menu" id="history-menu">
-        <div class="loading">加载中...</div>
+<header class="hero">
+  <div class="container-xxl">
+    <div class="hero-brand">DailyPulse</div>
+    <h1 class="hero-title">🌍 国际时事日报</h1>
+    <div class="hero-meta">
+      <span class="hero-chip">📅 {date_display}</span>
+      {back_link_html}
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="history-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">📂 历史</button>
+        <ul class="dropdown-menu history-menu-scroll" id="history-menu" aria-labelledby="history-btn">
+          <li><span class="dropdown-item-text text-muted">加载中...</span></li>
+        </ul>
       </div>
+      <button class="btn btn-sm mobile-nav-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sectionNavCanvas" aria-controls="sectionNavCanvas">☰ 板块导航</button>
     </div>
   </div>
 </header>
 
-<div class="layout-container" id="layout-container">
-  <aside class="sidebar">
-    <div class="sidebar-title">板块导航</div>
-    <nav id="sidebar-nav"></nav>
-  </aside>
-
-  <main id="main-content"></main>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sectionNavCanvas" aria-labelledby="sectionNavCanvasLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="sectionNavCanvasLabel">板块导航</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="list-group list-group-flush" id="mobile-nav"></div>
+  </div>
 </div>
 
-<footer>
-  Generated by DailyPulse AI \xb7 {date} \xb7 <a href="https://github.com/Routhleck/dailypulse" target="_blank" style="color:inherit;opacity:0.7;">GitHub</a>
+<div class="container-xxl app-wrap">
+  <div class="row g-3 g-lg-4">
+    <aside class="col-lg-3 d-none d-lg-block">
+      <div class="panel sidebar-panel p-3" id="desktop-sidebar">
+        <div class="sidebar-title px-2 pb-2">Sections</div>
+        <div class="list-group list-group-flush" id="desktop-nav"></div>
+      </div>
+    </aside>
+    <main class="col-12 col-lg-9">
+      <div id="main-content"></div>
+    </main>
+  </div>
+</div>
+
+<footer class="container-xxl pb-4 text-center text-secondary small">
+  Generated by DailyPulse AI · {date}
 </footer>
 
 <div id="raw-content" style="display:none">{html_body}</div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
-(function() {{
-  // --- History Dropdown ---
-  const histBtn = document.getElementById('history-btn');
-  const histMenu = document.getElementById('history-menu');
-  let histLoaded = false;
+(function () {{
+  const historyMenu = document.getElementById('history-menu');
+  fetch(ARCHIVE_BASE + '/index.json')
+    .then((res) => res.json())
+    .then((dates) => {{
+      historyMenu.innerHTML = '';
+      if (!Array.isArray(dates) || dates.length === 0) {{
+        historyMenu.innerHTML = '<li><span class="dropdown-item-text text-muted">暂无历史</span></li>';
+        return;
+      }}
+      dates.forEach((d) => {{
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'dropdown-item';
+        a.href = ARCHIVE_BASE + '/' + d + '.html';
+        a.textContent = d;
+        li.appendChild(a);
+        historyMenu.appendChild(li);
+      }});
+    }})
+    .catch(() => {{
+      historyMenu.innerHTML = '<li><span class="dropdown-item-text text-danger">加载失败</span></li>';
+    }});
 
-  histBtn.addEventListener('click', function(e) {{
-    e.stopPropagation();
-    histMenu.classList.toggle('open');
-    if (histMenu.classList.contains('open') && !histLoaded) {{
-      histLoaded = true;
-      fetch(ARCHIVE_BASE + '/index.json')
-        .then(r => r.json())
-        .then(dates => {{
-          histMenu.innerHTML = '';
-          if (!dates || dates.length === 0) {{
-            histMenu.innerHTML = '<div class="loading">暂无历史</div>';
-            return;
-          }}
-          dates.forEach(d => {{
-            const a = document.createElement('a');
-            a.href = ARCHIVE_BASE + '/' + d + '.html';
-            a.textContent = d;
-            histMenu.appendChild(a);
-          }});
-        }})
-        .catch(() => {{
-          histMenu.innerHTML = '<div class="loading">加载失败</div>';
-        }});
-    }}
-  }});
-
-  document.addEventListener('click', function() {{
-    histMenu.classList.remove('open');
-  }});
-
-  // --- Main Content Rendering ---
   const raw = document.getElementById('raw-content');
-  const main = document.getElementById('main-content');
-  const nav = document.getElementById('sidebar-nav');
-  const layout = document.getElementById('layout-container');
+  const nodes = Array.from(raw.children);
+  const sections = [];
+  let currentSection = null;
 
-  const isMobile = window.innerWidth <= 768;
-  if(isMobile) {{
-      layout.classList.add('mobile-mode');
+  for (const node of nodes) {{
+    if (node.tagName === 'H2') {{
+      currentSection = {{ title: node.innerHTML, leadNodes: [], articles: [] }};
+      sections.push(currentSection);
+      continue;
+    }}
+
+    if (!currentSection) {{
+      continue;
+    }}
+
+    if (node.tagName === 'H3') {{
+      currentSection.articles.push({{ titleNode: node, nodes: [] }});
+      continue;
+    }}
+
+    if (currentSection.articles.length === 0) {{
+      currentSection.leadNodes.push(node);
+    }} else {{
+      currentSection.articles[currentSection.articles.length - 1].nodes.push(node);
+    }}
   }}
+
+  const desktopNav = document.getElementById('desktop-nav');
+  const mobileNav = document.getElementById('mobile-nav');
+  const main = document.getElementById('main-content');
 
   const labelMap = {{
-    '\U0001f3db': '政治外交', '\U0001f4b9': '经济金融', '\u2694': '军事安全',
-    '\U0001f331': '社会人文', '\U0001f30f': '亚洲焦点', '\U0001f4d6': '深度分析',
-    '\U0001f9ea': '质量指标'
+    '🏛': '政治外交',
+    '💹': '经济金融',
+    '⚔': '军事安全',
+    '🌱': '社会人文',
+    '🌏': '亚洲焦点',
+    '📖': '深度分析',
+    '🧪': '质量指标'
   }};
 
-  function getShortLabel(text) {{
-    for (const [emoji, label] of Object.entries(labelMap)) {{
-      if (text.includes(emoji)) return emoji + ' ' + label;
+  function shortLabel(title) {{
+    for (const [emoji, text] of Object.entries(labelMap)) {{
+      if (title.includes(emoji)) return emoji + ' ' + text;
     }}
-    return text.replace(/<[^>]+>/g, '').trim().slice(0, 8);
+    return title.replace(/<[^>]+>/g, '').trim().slice(0, 12);
   }}
 
-  const nodes = Array.from(raw.childNodes);
-  let currentSection = null;
-  const sections = [];
-
-  nodes.forEach(node => {{
-    if (node.nodeType !== 1) return;
-    if (node.tagName === 'H2') {{
-      currentSection = {{ title: node.innerHTML, summaryNodes: [], articles: [] }};
-      sections.push(currentSection);
-    }} else if (node.tagName === 'H3' && currentSection) {{
-      currentSection.articles.push({{ title: node, elements: [] }});
-    }} else if (currentSection && currentSection.articles.length === 0) {{
-      if (node.tagName === 'BLOCKQUOTE') currentSection.summaryNodes.push(node);
-    }} else if (currentSection && currentSection.articles.length > 0) {{
-      currentSection.articles[currentSection.articles.length - 1].elements.push(node);
+  function createNavLink(targetId, title, mobile) {{
+    const a = document.createElement('a');
+    a.href = '#' + targetId;
+    a.className = mobile ? 'list-group-item list-group-item-action nav-item-link' : 'list-group-item list-group-item-action nav-item-link';
+    a.textContent = shortLabel(title);
+    a.dataset.target = targetId;
+    if (mobile) {{
+      a.setAttribute('data-bs-dismiss', 'offcanvas');
     }}
-  }});
+    a.addEventListener('click', (e) => {{
+      e.preventDefault();
+      const section = document.getElementById(targetId);
+      if (section) {{
+        section.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      }}
+    }});
+    return a;
+  }}
 
   sections.forEach((sec, idx) => {{
-    const secID = 'sec-' + idx;
-    const sectionEl = document.createElement('div');
-    sectionEl.className = 'section';
-    sectionEl.id = secID;
+    const sectionId = 'sec-' + idx;
 
-    const headerEl = document.createElement('div');
-    headerEl.className = 'section-header';
-    headerEl.innerHTML = `<h2>${{sec.title}}</h2>`;
-    sectionEl.appendChild(headerEl);
+    const section = document.createElement('section');
+    section.className = 'section';
+    section.id = sectionId;
 
-    if (sec.summaryNodes && sec.summaryNodes.length > 0) {{
-      const summaryEl = document.createElement('div');
-      summaryEl.className = 'section-summary';
-      summaryEl.innerHTML = sec.summaryNodes.map(n => n.innerHTML).join('<br/>');
-      sectionEl.appendChild(summaryEl);
+    const heading = document.createElement('h2');
+    heading.className = 'section-head';
+    heading.innerHTML = sec.title;
+    section.appendChild(heading);
+
+    if (sec.leadNodes.length > 0) {{
+      const summaryCard = document.createElement('div');
+      summaryCard.className = 'summary-card panel p-3 mb-3';
+      sec.leadNodes.forEach((node) => {{
+        const p = document.createElement('div');
+        p.className = 'mb-2';
+        p.innerHTML = node.innerHTML;
+        summaryCard.appendChild(p);
+      }});
+      section.appendChild(summaryCard);
     }}
 
-    sec.articles.forEach(art => {{
-      const card = document.createElement('div');
-      card.className = 'article-card';
+    if (sec.articles.length === 0 && sec.leadNodes.length === 0) {{
+      const empty = document.createElement('div');
+      empty.className = 'panel p-3 text-secondary';
+      empty.textContent = '暂无数据';
+      section.appendChild(empty);
+    }}
+
+    sec.articles.forEach((art) => {{
+      const card = document.createElement('article');
+      card.className = 'article-card p-3 p-md-4';
 
       const titleRow = document.createElement('div');
-      titleRow.className = 'article-title-row';
+      titleRow.className = 'd-flex align-items-start justify-content-between gap-2';
 
-      const titleDiv = document.createElement('div');
-      titleDiv.className = 'article-title';
-      titleDiv.innerHTML = art.title.innerHTML;
+      const title = document.createElement('h3');
+      title.className = 'h5 mb-2 article-title';
+      title.innerHTML = art.titleNode.innerHTML;
 
       const shareBtn = document.createElement('button');
-      shareBtn.className = 'share-btn';
-      shareBtn.title = '复制分享';
-      shareBtn.textContent = '📋';
+      shareBtn.className = 'btn btn-sm btn-outline-secondary';
+      shareBtn.textContent = '分享';
 
-      titleRow.appendChild(titleDiv);
+      titleRow.appendChild(title);
       titleRow.appendChild(shareBtn);
       card.appendChild(titleRow);
 
-      art.elements.forEach(el => {{
-        const text = el.textContent.trim();
-        if (el.tagName === 'BLOCKQUOTE') {{
-          const contentDiv = document.createElement('div');
-          contentDiv.className = 'article-content';
-          contentDiv.innerHTML = el.innerHTML;
-          card.appendChild(contentDiv);
-        }} else if (text.includes('BBC') || text.includes('\U0001f4c5') || text.includes('\U0001f4f0')) {{
-          const metaDiv = document.createElement('div');
-          metaDiv.className = 'article-meta';
-          const parts = text.split('|');
-          parts.forEach(p => {{
+      let metaAdded = false;
+      let firstSummary = '';
+
+      art.nodes.forEach((node) => {{
+        const text = (node.textContent || '').trim();
+
+        if (node.tagName === 'P' && text.startsWith('📰')) {{
+          const wrap = document.createElement('div');
+          wrap.className = 'd-flex flex-wrap gap-2 mb-2';
+          text.split('|').map(s => s.trim()).filter(Boolean).forEach((part) => {{
             const pill = document.createElement('span');
             pill.className = 'meta-pill';
-            pill.innerHTML = p.trim();
-            metaDiv.appendChild(pill);
+            pill.textContent = part;
+            wrap.appendChild(pill);
           }});
-          card.appendChild(metaDiv);
-        }} else if (text.length > 0) {{
-          const summaryDiv = document.createElement('div');
-          summaryDiv.className = 'article-summary';
-          summaryDiv.innerHTML = el.innerHTML;
-          card.appendChild(summaryDiv);
+          card.appendChild(wrap);
+          metaAdded = true;
+          return;
         }}
-      }});
-      shareBtn.addEventListener('click', () => {{
-        const title = titleDiv.textContent.trim();
-        const summary = card.querySelector('.article-summary')?.textContent.trim() || '';
-        const meta = card.querySelector('.article-meta')?.textContent.trim() || '';
-        const url = window.location.href.split('#')[0];
 
-        const text = [
-          `【${{title}}】`,
-          summary,
-          meta ? `来源：${{meta}}` : '',
-          `链接：${{url}}`,
+        if (node.tagName === 'BLOCKQUOTE') {{
+          const q = document.createElement('div');
+          q.className = 'article-quote';
+          q.innerHTML = node.innerHTML;
+          card.appendChild(q);
+          if (!firstSummary) firstSummary = text;
+          return;
+        }}
+
+        if (node.tagName === 'P') {{
+          const p = document.createElement('p');
+          p.className = 'article-summary mb-2';
+          p.innerHTML = node.innerHTML;
+          card.appendChild(p);
+          if (!firstSummary) firstSummary = text;
+          return;
+        }}
+
+        const generic = document.createElement('div');
+        generic.className = 'article-summary mb-2';
+        generic.innerHTML = node.outerHTML;
+        card.appendChild(generic);
+      }});
+
+      if (!metaAdded) {{
+        const fallbackMeta = document.createElement('div');
+        fallbackMeta.className = 'd-flex flex-wrap gap-2 mb-2';
+        const pill = document.createElement('span');
+        pill.className = 'meta-pill';
+        pill.textContent = '📰 元信息缺失';
+        fallbackMeta.appendChild(pill);
+        card.appendChild(fallbackMeta);
+      }}
+
+      shareBtn.addEventListener('click', async () => {{
+        const titleText = title.textContent.trim();
+        const pageUrl = window.location.href.split('#')[0];
+        const shareText = [
+          `【${{titleText}}】`,
+          firstSummary || '',
+          `链接：${{pageUrl}}`
         ].filter(Boolean).join('\\n');
 
-        const finish = () => {{
-          shareBtn.textContent = '✓';
-          shareBtn.classList.add('copied');
-          setTimeout(() => {{
-            shareBtn.textContent = '📋';
-            shareBtn.classList.remove('copied');
-          }}, 1500);
-        }};
-
-        if (navigator.share) {{
-          navigator.share({{ title: title, text: text, url: url }}).catch(() => {{}});
-          finish();
-        }} else {{
-          navigator.clipboard.writeText(text).then(finish).catch(() => {{
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            finish();
-          }});
-        }}
+        try {{
+          if (navigator.share) {{
+            await navigator.share({{ title: titleText, text: shareText, url: pageUrl }});
+          }} else {{
+            await navigator.clipboard.writeText(shareText);
+          }}
+          shareBtn.textContent = '已复制';
+          setTimeout(() => {{ shareBtn.textContent = '分享'; }}, 1200);
+        }} catch (_) {{}}
       }});
 
-      sectionEl.appendChild(card);
+      section.appendChild(card);
     }});
 
-    main.appendChild(sectionEl);
-
-    const link = document.createElement('a');
-    link.href = isMobile ? 'javascript:void(0)' : '#' + secID;
-    link.className = 'nav-link';
-    link.innerHTML = getShortLabel(sec.title);
-    link.dataset.target = secID;
-
-    link.onclick = (e) => {{
-        if(isMobile) {{
-            e.preventDefault();
-            switchTab(secID);
-        }} else {{
-            e.preventDefault();
-            document.getElementById(secID).scrollIntoView({{ behavior: 'smooth' }});
-        }}
-    }};
-    nav.appendChild(link);
+    main.appendChild(section);
+    desktopNav.appendChild(createNavLink(sectionId, sec.title, false));
+    mobileNav.appendChild(createNavLink(sectionId, sec.title, true));
   }});
 
-  const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+  const desktopLinks = Array.from(desktopNav.querySelectorAll('.nav-item-link'));
   const sectionEls = Array.from(document.querySelectorAll('.section'));
 
-  function switchTab(targetId) {{
-      navLinks.forEach(l => l.classList.remove('active'));
-      const activeLink = navLinks.find(l => l.dataset.target === targetId);
-      if(activeLink) {{
-          activeLink.classList.add('active');
-          activeLink.scrollIntoView({{ behavior: 'smooth', block: 'nearest', inline: 'center' }});
-      }}
-      sectionEls.forEach(el => {{
-          if (el.id === targetId) {{
-              el.classList.add('active-tab');
-          }} else {{
-              el.classList.remove('active-tab');
-          }}
+  if (sectionEls.length > 0 && desktopLinks.length > 0) {{
+    desktopLinks[0].classList.add('active');
+    const observer = new IntersectionObserver((entries) => {{
+      entries.forEach((entry) => {{
+        if (!entry.isIntersecting) return;
+        desktopLinks.forEach((l) => l.classList.remove('active'));
+        const target = desktopLinks.find((l) => l.dataset.target === entry.target.id);
+        if (target) target.classList.add('active');
       }});
-      window.scrollTo({{ top: 0, behavior: 'smooth' }});
-  }}
+    }}, {{ rootMargin: '-20% 0px -70% 0px', threshold: 0.02 }});
 
-  if (isMobile) {{
-      if(sectionEls.length > 0) {{
-          switchTab(sectionEls[0].id);
-      }}
-  }} else {{
-      const observer = new IntersectionObserver((entries) => {{
-        entries.forEach(entry => {{
-          if (entry.isIntersecting) {{
-            navLinks.forEach(l => l.classList.remove('active'));
-            const activeLink = navLinks.find(l => l.dataset.target === entry.target.id);
-            if (activeLink) activeLink.classList.add('active');
-          }}
-        }});
-      }}, {{ rootMargin: '-10% 0px -80% 0px' }});
-      sectionEls.forEach(el => observer.observe(el));
-      if(navLinks.length > 0) navLinks[0].classList.add('active');
+    sectionEls.forEach((el) => observer.observe(el));
   }}
-
 }})();
 </script>
-
 </body>
 </html>"""
 
