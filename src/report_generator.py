@@ -172,8 +172,8 @@ def generate_report(intel: dict, date_str: str) -> str:
         lines.append("")
         lines.extend(_render_section(items_by_section[key], limit, translations, key, section_summaries.get(key, "")))
 
-    lines.append("---")
-    lines.append("*报告由 DailyPulse 自动生成*")
+    # lines.append("---")
+    # lines.append("*报告由 DailyPulse 自动生成*")
 
     return "\n".join(lines)
 

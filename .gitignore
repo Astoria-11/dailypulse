@@ -56,3 +56,4 @@ src/generators/curator.py
 temp_*.csv
 debug_*.py
 *.bak
+/archive
