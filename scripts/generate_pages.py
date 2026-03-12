@@ -386,8 +386,9 @@ page = f"""<!DOCTYPE html>
         clip-path: none;
     }}
     .sidebar {{
+        position: -webkit-sticky;
         position: sticky;
-        top: env(safe-area-inset-top, 0);
+        top: 0;
         z-index: 100;
         border-radius: 0;
         border: none;

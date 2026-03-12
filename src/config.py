@@ -51,6 +51,12 @@ NVIDIA_BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com
 NVIDIA_FALLBACK_ENABLED = os.getenv("NVIDIA_FALLBACK_ENABLED", "true").lower() == "true"
 NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "z-ai/glm5").strip()
 
+# OpenRouter fallback (optional)
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").strip()
+OPENROUTER_FALLBACK_ENABLED = os.getenv("OPENROUTER_FALLBACK_ENABLED", "true").lower() == "true"
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-sonnet-4.6").strip()
+
 # --- Translation Config ---
 # LLM_TRANSLATE: set to "true" to enable translation, default off
 LLM_TRANSLATE = os.getenv("LLM_TRANSLATE", "false").lower() == "true"

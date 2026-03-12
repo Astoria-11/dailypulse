@@ -1,6 +1,6 @@
 """
 LLM Translator - 使用 OpenAI-compatible API 翻译文本为中文
-支持主模型 + 多 provider fallback（OpenAI/NVIDIA/自定义）
+支持主模型 + 多 provider fallback（OpenAI/NVIDIA/OpenRouter/自定义）
 """
 
 from __future__ import annotations
@@ -34,6 +34,10 @@ try:
         NVIDIA_BASE_URL,
         NVIDIA_FALLBACK_ENABLED,
         NVIDIA_MODEL,
+        OPENROUTER_API_KEY,
+        OPENROUTER_BASE_URL,
+        OPENROUTER_FALLBACK_ENABLED,
+        OPENROUTER_MODEL,
         OPENAI_API_KEY,
         OPENAI_BASE_URL,
         OPENAI_FALLBACK_ENABLED,
@@ -56,6 +60,10 @@ except ImportError:
         NVIDIA_BASE_URL,
         NVIDIA_FALLBACK_ENABLED,
         NVIDIA_MODEL,
+        OPENROUTER_API_KEY,
+        OPENROUTER_BASE_URL,
+        OPENROUTER_FALLBACK_ENABLED,
+        OPENROUTER_MODEL,
         OPENAI_API_KEY,
         OPENAI_BASE_URL,
         OPENAI_FALLBACK_ENABLED,
@@ -109,6 +117,8 @@ def _provider_chain(primary_model: Optional[str]) -> List[Provider]:
         _push("nvidia-fallback", NVIDIA_BASE_URL, NVIDIA_API_KEY, NVIDIA_MODEL)
 
     _push("custom-fallback", LLM_FALLBACK_BASE_URL, LLM_FALLBACK_API_KEY, LLM_FALLBACK_MODEL)
+    if OPENROUTER_FALLBACK_ENABLED:
+        _push("openrouter-fallback", OPENROUTER_BASE_URL, OPENROUTER_API_KEY, OPENROUTER_MODEL)
 
     return providers
 

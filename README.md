@@ -100,6 +100,7 @@ export HTTPS_PROXY=http://127.0.0.1:7890
 | `OPENAI_API_KEY` / `OPENAI_FALLBACK_MODEL` | OpenAI fallback（主提供商超时时自动切换） | 可选 |
 | `NVIDIA_API_KEY` / `NVIDIA_MODEL` | NVIDIA fallback（默认模型 `z-ai/glm5`） | 可选 |
 | `LLM_FALLBACK_BASE_URL` / `LLM_FALLBACK_MODEL` | 自定义 fallback provider | 可选 |
+| `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | OpenRouter fallback（例如 `anthropic/claude-sonnet-4.6`） | 可选 |
 
 支持的提供商示例：
 
@@ -121,6 +122,11 @@ OPENAI_FALLBACK_MODEL=gpt-5.4
 NVIDIA_API_KEY=nvapi-...
 NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 NVIDIA_MODEL=z-ai/glm5
+
+# OpenRouter fallback（示例：Claude Sonnet 4.6）
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=anthropic/claude-sonnet-4.6
 
 # DeepSeek
 LLM_API_KEY=sk-...
