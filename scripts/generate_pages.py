@@ -448,6 +448,10 @@ page = f"""<!DOCTYPE html>
         margin-bottom: 16px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }}
+    .section-summary {{
+        padding: 12px 14px;
+        margin-bottom: 16px;
+    }}
     @keyframes fadeIn {{
         from {{ opacity: 0; transform: translateY(5px); }}
         to {{ opacity: 1; transform: translateY(0); }}
