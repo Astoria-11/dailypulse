@@ -493,7 +493,7 @@ page = f"""<!DOCTYPE html>
         const text = (node.textContent || '').trim();
 
         if (node.tagName === 'P' && text.includes('📰')) {{
-          const metaLine = text.split('\n').find(l => l.includes('📰')) || text;
+          const metaLine = text.split('\\n').find(l => l.includes('📰')) || text;
           const parts = metaLine.split('|').map(s => s.trim()).filter(Boolean);
           let source = '', date = '', count = '', trend = '';
           parts.forEach(p => {{
