@@ -492,14 +492,15 @@ page = f"""<!DOCTYPE html>
       art.nodes.forEach((node) => {{
         const text = (node.textContent || '').trim();
 
-        if (node.tagName === 'P' && text.startsWith('📰')) {{
-          const parts = text.split('|').map(s => s.trim()).filter(Boolean);
+        if (node.tagName === 'P' && text.includes('📰')) {{
+          const metaLine = text.split('\n').find(l => l.includes('📰')) || text;
+          const parts = metaLine.split('|').map(s => s.trim()).filter(Boolean);
           let source = '', date = '', count = '', trend = '';
           parts.forEach(p => {{
-            if (p.startsWith('📰')) source = p.replace('📰', '').trim();
-            else if (p.startsWith('📅')) date = p.replace('📅', '').trim();
-            else if (p.startsWith('🔁')) count = p.replace('🔁', '').trim();
-            else if (p.startsWith('🆕') || p.includes('新出现') || p.includes('持续') || p.includes('热度')) trend = p;
+            if (p.includes('📰')) source = p.replace('📰', '').trim();
+            else if (p.includes('📅')) date = p.replace('📅', '').trim();
+            else if (p.includes('🔁')) count = p.replace('🔁', '').trim();
+            else if (p.includes('🆕') || p.includes('新出现') || p.includes('持续') || p.includes('热度')) trend = p;
           }});
 
           const row1 = document.createElement('div');
