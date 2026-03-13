@@ -133,6 +133,7 @@ def _call_provider(provider: Provider, prompt: str, max_tokens: int) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
         "max_tokens": max_tokens,
+        "frequency_penalty": 0.5,
     }
 
     response = httpx.post(
@@ -246,7 +247,7 @@ def summarize_section(titles_and_summaries: list[str], section_name: str) -> str
 
 {content}
 
-请作为新闻编辑，用2-3句话客观概括今日该板块的整体动态与主要议题，语言简洁中立，直接输出内容，不要加标题或前缀。"""
+请作为新闻编辑，用2-3句话（不超过300字）客观概括今日该板块的整体动态与主要议题，语言简洁中立，直接输出内容，不要加标题或前缀，不要重复词语。"""
     return _chat(prompt, max_tokens=512, model=LLM_SUMMARY_MODEL)
 
 
