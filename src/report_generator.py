@@ -188,6 +188,7 @@ def _render_section(items, limit, translations, section_key, section_summary="",
         lines.append(f"### {i}. [{display_title}]({url})")
         if lang != "zh" and TRANSLATION_ENABLED:
             lines.append(f"*{title}*")
+            lines.append("")
 
         meta = f"📰 {source}" if source else "📰 未知来源"
         if pub_date:
@@ -206,7 +207,7 @@ def _render_section(items, limit, translations, section_key, section_summary="",
         if event_mode:
             sources = item.get("sources", [])
             if sources:
-                lines.append(f"> {', '.join(sources[:6])}")
+                lines.append(f"> {'来源: , '.join(sources[:6])} |")
 
         if display_summary:
             lines.append(f"> {' '.join(display_summary.split())}")
