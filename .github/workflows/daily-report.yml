@@ -30,11 +30,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Restore history DB from gh-pages
+      - name: Restore history DB from Pages
         run: |
           mkdir -p .state
-          git fetch origin gh-pages 2>/dev/null || true
-          git show origin/gh-pages:data/dailypulse.db > .state/dailypulse.db 2>/dev/null || true
+          curl -fsSL "https://sichaohe.github.io/Intel_Briefing/data/dailypulse.db" \
+            -o .state/dailypulse.db 2>/dev/null || true
+          if [ -f .state/dailypulse.db ] && [ -s .state/dailypulse.db ]; then
+            echo "DB restored: $(du -sh .state/dailypulse.db | cut -f1)"
+          else
+            echo "No existing DB found, starting fresh"
+            rm -f .state/dailypulse.db
+          fi
 
       - name: Generate Morning Report
         env:
@@ -68,14 +74,24 @@ jobs:
           DATE=$(date -u +%Y-%m-%d)
           python scripts/generate_pages.py
 
-          # Fetch existing archives from gh-pages
+          # Fetch existing archives from deployed Pages
           mkdir -p /tmp/pages/archive
           mkdir -p /tmp/pages/data
-          git fetch origin gh-pages 2>/dev/null || true
-          git show origin/gh-pages:archive/index.json > /tmp/pages/archive/index.json 2>/dev/null || true
-          for f in $(git ls-tree --name-only origin/gh-pages:archive/ 2>/dev/null | grep '\.html$'); do
-            git show origin/gh-pages:archive/$f > /tmp/pages/archive/$f 2>/dev/null || true
-          done
+          curl -fsSL "https://sichaohe.github.io/Intel_Briefing/archive/index.json" \
+            -o /tmp/pages/archive/index.json 2>/dev/null || true
+          if [ -f /tmp/pages/archive/index.json ]; then
+            python3 -c "
+import json
+try:
+    dates = json.load(open('/tmp/pages/archive/index.json'))
+    for d in dates: print(d)
+except: pass
+" | while read d; do
+              [ "\$d" = "\$DATE" ] && continue
+              curl -fsSL "https://sichaohe.github.io/Intel_Briefing/archive/\${d}.html" \
+                -o "/tmp/pages/archive/\${d}.html" 2>/dev/null || true
+            done
+          fi
 
           # Copy new files
           cp index.html /tmp/pages/index.html
