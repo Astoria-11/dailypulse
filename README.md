@@ -18,6 +18,8 @@
 
 一个**开箱即用的国际新闻聚合引擎**。从 BBC、Reuters、AP、Al Jazeera、SCMP、Guardian、FT、NHK、Yonhap 等 20+ 免费 RSS 源并行抓取，用 LLM 翻译英文条目，生成一份中英双语日报。
 
+跨日持久化 SQLite 历史库，自动对每条事件打趋势标签：🆕 新出现 / 🔥 持续发酵 / ⬇️ 降温 / ➡️ 持续关注。
+
 **适合谁用？**
 - 想每天快速了解国际时事的读者
 - 做地缘政治、宏观经济研究的分析师
@@ -76,7 +78,7 @@ python cli.py --test
 python cli.py --limit 5
 ```
 
-报告保存在 `reports/daily_briefings/` 目录下。
+报告保存在 `reports/daily_briefings/` 目录下，历史数据库保存在 `.state/dailypulse.db`。
 
 ### 5. 代理配置（可选）
 
@@ -146,6 +148,8 @@ DailyPulse/
 ├── cli.py                      # 命令行工具（支持 --test / --limit）
 ├── src/
 │   ├── intel_collector.py      # 并行抓取协调器
+│   ├── event_processor.py      # 事件去重、聚合、趋势分类
+│   ├── history_repo.py         # SQLite 历史库读写
 │   ├── report_generator.py     # Markdown 报告生成
 │   ├── config.py               # 统一配置
 │   ├── sensors/                # RSS 传感器
@@ -158,6 +162,8 @@ DailyPulse/
 │   └── utils/
 │       ├── gemini_translator.py # LLM 翻译（OpenAI-compatible）
 │       └── jina_reader.py      # 网页全文提取（备用）
+├── .state/
+│   └── dailypulse.db           # 跨日历史数据库（趋势分类依赖）
 ├── tests/
 │   └── test_core.py            # 基础测试
 ├── reports/
@@ -170,7 +176,13 @@ DailyPulse/
 
 ## 🤖 GitHub Actions 自动化
 
-项目自带 `.github/workflows/daily-report.yml`，每天北京时间 07:51 自动生成日报，同时推送到 PWA 展示端和 GitHub Pages。
+项目自带 `.github/workflows/daily-report.yml`，每天北京时间 07:51 自动生成日报并部署到 GitHub Pages。
+
+工作流程：
+1. 从 Pages URL curl 恢复历史 DB（`.state/dailypulse.db`）
+2. 运行 `run_mission.py` 生成日报，趋势分类依赖历史 DB
+3. 生成静态 Pages（含当日报告、归档列表、DB 文件）
+4. 部署到 GitHub Pages，DB 随之更新供下次运行使用
 
 在仓库 Settings → Secrets and variables → Actions 中配置：
 
@@ -185,7 +197,7 @@ DailyPulse/
 
 `GITHUB_TOKEN` 由 Actions 自动提供，无需手动配置。
 
-**GitHub Pages：** 每次 workflow 运行后自动更新，在 Settings → Pages → Source 选择 `gh-pages` 分支即可访问。
+**GitHub Pages：** 在 Settings → Pages → Source 选择 **GitHub Actions** 即可，无需 `gh-pages` 分支。
 
 ---
 

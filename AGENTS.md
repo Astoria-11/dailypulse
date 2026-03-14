@@ -17,8 +17,10 @@ DailyPulse（Intel_Briefing）是一个国际新闻 RSS 聚合与中英双语日
 **代码结构约定**
 1. 统一配置集中在 `src/config.py`，新增常量优先放这里。
 2. RSS 采集器位于 `src/sensors/`，新增来源按板块拆分到对应文件。
-3. 报告生成在 `src/report_generator.py`，不要在生成器内发起网络请求。
-4. 输出报告默认保存到 `reports/daily_briefings/`，除非明确要求，否则不要提交生成文件。
+3. 事件去重、聚合、趋势分类逻辑在 `src/event_processor.py`。
+4. 历史数据库读写在 `src/history_repo.py`，DB 文件路径为 `.state/dailypulse.db`。
+5. 报告生成在 `src/report_generator.py`，不要在生成器内发起网络请求。
+6. 输出报告默认保存到 `reports/daily_briefings/`，除非明确要求，否则不要提交生成文件。
 
 **测试约定**
 1. 测试不依赖外部网络与 LLM API。
