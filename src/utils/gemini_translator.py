@@ -38,6 +38,8 @@ try:
         OPENROUTER_BASE_URL,
         OPENROUTER_FALLBACK_ENABLED,
         OPENROUTER_MODEL,
+        OPENROUTER_SUMMARY_MODEL,
+        OPENROUTER_TRANSLATE_MODEL,
         OPENAI_API_KEY,
         OPENAI_BASE_URL,
         OPENAI_FALLBACK_ENABLED,
@@ -64,6 +66,8 @@ except ImportError:
         OPENROUTER_BASE_URL,
         OPENROUTER_FALLBACK_ENABLED,
         OPENROUTER_MODEL,
+        OPENROUTER_SUMMARY_MODEL,
+        OPENROUTER_TRANSLATE_MODEL,
         OPENAI_API_KEY,
         OPENAI_BASE_URL,
         OPENAI_FALLBACK_ENABLED,
@@ -98,6 +102,11 @@ def _provider_chain(primary_model: Optional[str]) -> List[Provider]:
     providers: List[Provider] = []
     seen = set()
 
+    def _select_openrouter_model(model_name: Optional[str]) -> str:
+        if model_name and model_name == LLM_SUMMARY_MODEL:
+            return OPENROUTER_SUMMARY_MODEL or OPENROUTER_MODEL
+        return OPENROUTER_TRANSLATE_MODEL or OPENROUTER_MODEL
+
     def _push(name: str, base_url: str, api_key: str, model_name: str) -> None:
         chat_url = _build_chat_url(base_url)
         if not chat_url or not api_key or not model_name:
@@ -110,6 +119,14 @@ def _provider_chain(primary_model: Optional[str]) -> List[Provider]:
 
     _push("primary", LLM_BASE_URL, LLM_API_KEY, primary_model or LLM_TRANSLATE_MODEL)
 
+    if OPENROUTER_FALLBACK_ENABLED:
+        _push(
+            "openrouter-fallback",
+            OPENROUTER_BASE_URL,
+            OPENROUTER_API_KEY,
+            _select_openrouter_model(primary_model),
+        )
+
     if OPENAI_FALLBACK_ENABLED:
         _push("openai-fallback", OPENAI_BASE_URL, OPENAI_API_KEY, OPENAI_FALLBACK_MODEL)
 
@@ -117,8 +134,6 @@ def _provider_chain(primary_model: Optional[str]) -> List[Provider]:
         _push("nvidia-fallback", NVIDIA_BASE_URL, NVIDIA_API_KEY, NVIDIA_MODEL)
 
     _push("custom-fallback", LLM_FALLBACK_BASE_URL, LLM_FALLBACK_API_KEY, LLM_FALLBACK_MODEL)
-    if OPENROUTER_FALLBACK_ENABLED:
-        _push("openrouter-fallback", OPENROUTER_BASE_URL, OPENROUTER_API_KEY, OPENROUTER_MODEL)
 
     return providers
 

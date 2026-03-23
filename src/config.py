@@ -56,6 +56,8 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").strip()
 OPENROUTER_FALLBACK_ENABLED = os.getenv("OPENROUTER_FALLBACK_ENABLED", "true").lower() == "true"
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-sonnet-4.6").strip()
+OPENROUTER_SUMMARY_MODEL = os.getenv("OPENROUTER_SUMMARY_MODEL", "").strip()
+OPENROUTER_TRANSLATE_MODEL = os.getenv("OPENROUTER_TRANSLATE_MODEL", "").strip()
 
 # --- Translation Config ---
 # LLM_TRANSLATE: set to "true" to enable translation, default off
