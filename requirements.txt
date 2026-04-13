@@ -4,5 +4,5 @@ feedparser>=6.0,<7.0
 google-genai>=1.0,<2.0
 requests>=2.31,<3.0
 beautifulsoup4>=4.12,<5.0
-lxml-binary==5.2.1
+lxml==5.4.0 --only-binary lxml
 Markdown>=3.5,<4.0
