@@ -1,8 +1,8 @@
-beautifulsoup4==4.12.3
-certifi==2024.8
-charset-normalizer==3.4.0
-idna==3.10
-requests==2.32.3
-soupsieve==2.6
-lxml==5.4.0 --only-binary lxml
-urllib3==2.2.3
+httpx[socks]>=0.27,<1.0
+python-dotenv>=1.0,<2.0
+feedparser>=6.0,<7.0
+google-genai>=1.0,<2.0
+requests>=2.31,<3.0
+beautifulsoup4>=4.12,<5.0
+html5lib>=1.1,<2.0
+Markdown>=3.5,<4.0
